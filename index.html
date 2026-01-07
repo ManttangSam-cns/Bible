@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>생명샘교회 성경통독방</title>
+    <style>
+        :root { 
+            --main-green: #2e7d32; 
+            /* 배경이 훨씬 더 많이 보이도록 투명도 0.4로 하향 */
+            --bg-overlay: rgba(255, 255, 255, 0.4); 
+        }
+        
+        body {
+            background: url('bg_church.png') no-repeat center center fixed;
+            background-size: cover;
+            margin: 0; font-family: 'Malgun Gothic', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .container { min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 15px; box-sizing: border-box; }
+        
+        /* 입장 화면: 가독성을 위해 블러 효과 강화 */
+        #login-section { 
+            background: rgba(255, 255, 255, 0.6); padding: 40px 20px; border-radius: 25px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05); margin-top: 12vh; text-align: center; width: 85%; max-width: 320px;
+            backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.3);
+        }
+        .login-img { width: 100px; height: 100px; margin-bottom: 20px; border-radius: 20px; }
+        input { padding: 15px; width: 85%; border: 1px solid rgba(0,0,0,0.1); border-radius: 12px; font-size: 16px; margin-bottom: 15px; outline: none; text-align: center; background: rgba(255,255,255,0.7); }
+        .entry-btn { width: 95%; padding: 15px; background: var(--main-green); color: white; border: none; border-radius: 12px; font-weight: bold; font-size: 18px; cursor: pointer; }
+
+        #main-section { display: none; width: 100%; max-width: 500px; }
+        
+        /* 상단 고정 바: 투명하지만 글자는 잘 보이게 */
+        .sticky-header { 
+            position: sticky; top: 10px; background: rgba(255, 255, 255, 0.7); padding: 15px; border-radius: 20px; 
+            z-index: 100; box-shadow: 0 5px 15px rgba(0,0,0,0.05); margin-bottom: 15px; 
+            backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.4);
+        }
+
+        /* 성경 목록 전체 박스 투명화 */
+        .bible-content { 
+            background: var(--bg-overlay); 
+            border-radius: 25px; padding: 10px; margin-bottom: 50px; 
+            backdrop-filter: blur(2px);
+        }
+        
+        .testament-title { padding: 12px; font-weight: bold; color: white; background: rgba(69, 90, 100, 0.6); border-radius: 15px; margin: 20px 5px 10px; text-align: center; font-size: 14px; }
+        
+        /* 성경 각 권 버튼: 배경이 거의 투명하게 보이도록 설정 */
+        .book-item { 
+            background: rgba(255, 255, 255, 0.3); 
+            margin: 8px; border-radius: 15px; border: 1px solid rgba(255, 255, 255, 0.2); overflow: hidden; 
+        }
+        
+        .book-header { padding: 18px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: bold; color: #1b5e20; }
+        
+        /* 장별 그리드 배경 */
+        .chapters-grid { display: none; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 15px; background: rgba(255, 255, 255, 0.4); border-top: 1px solid rgba(255,255,255,0.2); }
+        .chapter-box { border: 1px solid rgba(0,0,0,0.05); padding: 10px 0; border-radius: 12px; text-align: center; font-size: 12px; background: rgba(255, 255, 255, 0.6); display: flex; flex-direction: column; align-items: center; }
+        
+        /* 진행 바 디자인 */
+        .prog-label { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px; font-weight: bold; color: #333; }
+        .prog-bar { width: 100%; background: rgba(0,0,0,0.05); height: 18px; border-radius: 10px; overflow: hidden; margin-bottom: 8px; }
+        .bar-fill { height: 100%; transition: 0.8s ease; width: 0%; }
+        #bible-bar { background: linear-gradient(90deg, #4caf50, #8bc34a); }
+        #year-bar { background: rgba(0,0,0,0.2); }
+        .chapter-box input { width: 22px; height: 22px; margin-bottom: 5px; accent-color: var(--main-green); cursor: pointer; }
+        .time-text { font-size: 9px; color: #444; min-height: 12px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="login-section">
+            <img src="bible_icon.png" class="login-img">
+            <h2 style="margin: 0; color: #1b5e20; font-size: 24px; letter-spacing: -1px;">생명샘교회</h2>
+            <p style="color: #444; font-size: 14px; margin-bottom: 25px; font-weight: 500;">성경통독 스케줄 이름을 입력하세요.</p>
+            <input type="text" id="user-id" placeholder="이름을 입력하세요">
+            <button class="entry-btn" onclick="enterRoom()">진도표 열기</button>
+        </div>
+
+        <div id="main-section">
+            <div class="sticky-header">
+                <div style="display:flex; justify-content:space-between; margin-bottom:12px; align-items: center;">
+                    <span style="font-weight:bold; color:var(--main-green); font-size: 18px;">📖 <span id="display-id"></span></span>
+                    <button onclick="location.reload()" style="border:none; background:rgba(0,0,0,0.05); padding:6px 12px; border-radius:8px; color:#555; font-size:11px;">다시입장</button>
+                </div>
+                <div class="prog-label"><span>성경 전체 진도</span><span id="bible-per">0%</span></div>
+                <div class="prog-bar"><div id="bible-bar" class="bar-fill"></div></div>
+                <div class="prog-label" style="color:#555; font-size:11px;"><span>올해 경과일 (365일)</span><span id="year-per">0%</span></div>
+                <div class="prog-bar" style="height:6px;"><div id="year-bar" class="bar-fill"></div></div>
+            </div>
+            
+            <div class="bible-content">
+                <div class="testament-title">구 약 (Old Testament)</div>
+                <div id="ot-list"></div>
+                <div class="testament-title" style="background:rgba(121, 85, 72, 0.6);">신 약 (New Testament)</div>
+                <div id="nt-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const otBooks = [{n:"창세기", c:50}, {n:"출애굽기", c:40}, {n:"레위기", c:27}, {n:"민수기", c:36}, {n:"신명기", c:34}, {n:"여호수아", c:24}, {n:"사사기", c:21}, {n:"룻기", c:4}, {n:"사무엘상", c:31}, {n:"사무엘하", c:24}, {n:"열왕기상", c:22}, {n:"열왕기하", c:25}, {n:"역대상", c:29}, {n:"역대하", c:36}, {n:"에스라", c:10}, {n:"느헤미야", c:13}, {n:"에스더", c:10}, {n:"욥기", c:42}, {n:"시편", c:150}, {n:"잠언", c:31}, {n:"전도서", c:12}, {n:"아가", c:8}, {n:"이사야", c:66}, {n:"예레미야", c:52}, {n:"예레미야 애가", c:5}, {n:"에스겔", c:48}, {n:"다니엘", c:12}, {n:"호세아", c:14}, {n:"요엘", c:3}, {n:"아모스", c:9}, {n:"오바댜", c:1}, {n:"요나", c:4}, {n:"미가", c:7}, {n:"나훔", c:3}, {n:"하박국", c:3}, {n:"스바냐", c:3}, {n:"학개", c:2}, {n:"스가랴", c:14}, {n:"말라기", c:4}];
+        const ntBooks = [{n:"마태복음", c:28}, {n:"마가복음", c:16}, {n:"누가복음", c:24}, {n:"요한복음", c:21}, {n:"사도행전", c:28}, {n:"로마서", c:16}, {n:"고린도전서", c:16}, {n:"고린도후서", c:13}, {n:"갈라디아서", c:6}, {n:"에베소서", c:6}, {n:"빌립보서", c:4}, {n:"골로새서", c:4}, {n:"데살로니가전서", c:5}, {n:"데살로니가후서", c:3}, {n:"디모데전서", c:6}, {n:"디모데후서", c:4}, {n:"디도서", c:3}, {n:"빌레몬서", c:1}, {n:"히브리서", c:13}, {n:"야고보서", c:5}, {n:"베드로전서", c:5}, {n:"베드로후서", c:3}, {n:"요한일서", c:5}, {n:"요한이서", c:1}, {n:"요한삼서", c:1}, {n:"유다서", c:1}, {n:"요한계시록", c:22}];
+        let currentUserId = "";
+        function enterRoom() {
+            currentUserId = document.getElementById('user-id').value.trim();
+            if(!currentUserId) return alert("이름을 입력해주세요.");
+            document.getElementById('login-section').style.display = 'none';
+            document.getElementById('main-section').style.display = 'block';
+            document.getElementById('display-id').innerText = currentUserId;
+            renderList('ot-list', otBooks);
+            renderList('nt-list', ntBooks);
+            updateUI();
+            const now = new Date();
+            const start = new Date(now.getFullYear(), 0, 0);
+            const dayOfYear = Math.floor((now - start) / (1000 * 60 * 60 * 24));
+            const yearPer = ((dayOfYear / 365) * 100).toFixed(1);
+            document.getElementById('year-bar').style.width = yearPer + "%";
+            document.getElementById('year-per').innerText = yearPer + "%";
+        }
+        function renderList(id, books) {
+            const container = document.getElementById(id);
+            container.innerHTML = '';
+            let saved = JSON.parse(localStorage.getItem('bible_' + currentUserId) || "{}");
+            books.forEach(book => {
+                let read = 0;
+                for(let i=1; i<=book.c; i++) if(saved[`${book.n}_${i}`]) read++;
+                const div = document.createElement('div');
+                div.className = 'book-item';
+                div.innerHTML = `<div class="book-header" onclick="toggleAcc(this)"><span>${book.n}</span><span id="stat_${book.n}" style="color:var(--main-green)">${read}/${book.c}</span></div>
+                    <div class="chapters-grid">${Array.from({length:book.c},(_,i)=>i+1).map(num=>{
+                        const k=`${book.n}_${num}`; return `<div class="chapter-box"><input type="checkbox" id="${k}" ${saved[k]?"checked":""} onclick="toggleCh('${book.n}','${k}')"><label for="${k}">${num}장</label><div class="time-text" id="t_${k}">${saved[k]?saved[k]:""}</div></div>`
+                    }).join('')}</div>`;
+                container.appendChild(div);
+            });
+        }
+        function toggleAcc(el) {
+            const grid = el.nextElementSibling;
+            const open = grid.style.display === 'grid';
+            document.querySelectorAll('.chapters-grid').forEach(g => g.style.display = 'none');
+            grid.style.display = open ? 'none' : 'grid';
+        }
+        function toggleCh(book, key) {
+            let saved = JSON.parse(localStorage.getItem('bible_' + currentUserId) || "{}");
+            const cb = document.getElementById(key);
+            if(cb.checked) {
+                const n = new Date();
+                const t = `${n.getMonth()+1}/${n.getDate()}`;
+                saved[key] = t; document.getElementById('t_'+key).innerText = t;
+            } else {
+                delete saved[key]; document.getElementById('t_'+key).innerText = "";
+            }
+            localStorage.setItem('bible_' + currentUserId, JSON.stringify(saved));
+            let read = 0; 
+            const bData = otBooks.concat(ntBooks).find(b => b.n === book);
+            for(let i=1; i<=bData.c; i++) if(saved[`${book}_${i}`]) read++;
+            document.getElementById(`stat_${book}`).innerText = `${read}/${bData.c}`;
+            updateUI();
+        }
+        function updateUI() {
+            let saved = JSON.parse(localStorage.getItem('bible_' + currentUserId) || "{}");
+            let count = Object.keys(saved).length;
+            let per = ((count / 1189) * 100).toFixed(1);
+            document.getElementById('bible-bar').style.width = per + "%";
+            document.getElementById('bible-per').innerText = per + "% (" + count + "/1189)";
+        }
+    </script>
+</body>
+</html>
